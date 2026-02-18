@@ -6,7 +6,9 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/inventory/presentation/screens/add_edit_product_screen.dart';
 import '../../features/inventory/presentation/screens/product_detail_screen.dart';
 import '../../features/inventory/presentation/screens/product_list_screen.dart';
+import '../../features/invoice/presentation/screens/invoice_detail_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/pos/presentation/screens/pos_screen.dart';
 import '../../features/scanner/presentation/screens/barcode_scan_screen.dart';
 import '../di/providers.dart';
 import '../storage/storage_keys.dart';
@@ -52,6 +54,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/inventory/:id',
         builder: (_, state) => ProductDetailScreen(
           productId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/pos',
+        builder: (_, __) => const PosScreen(),
+      ),
+      GoRoute(
+        path: '/invoices/:id',
+        builder: (_, state) => InvoiceDetailScreen(
+          invoiceId: state.pathParameters['id']!,
         ),
       ),
       GoRoute(

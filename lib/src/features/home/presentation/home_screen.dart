@@ -50,6 +50,12 @@ class HomeScreen extends ConsumerWidget {
                   icon: const Icon(Icons.inventory_2),
                   label: const Text('Open Inventory'),
                 ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: () => context.push('/pos'),
+                  icon: const Icon(Icons.point_of_sale),
+                  label: const Text('Open POS'),
+                ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(
