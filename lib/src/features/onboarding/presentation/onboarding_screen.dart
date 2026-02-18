@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import 'onboarding_controller.dart';
+import '../../../core/di/providers.dart';
+import '../../../core/storage/storage_keys.dart';
 
 class OnboardingScreen extends ConsumerWidget {
   const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final storage = ref.read(localStorageProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Welcome to Musayyer')),
       body: Padding(
@@ -44,7 +48,10 @@ class OnboardingScreen extends ConsumerWidget {
             ),
             FilledButton(
               onPressed: () async {
-                await ref.read(onboardingControllerProvider.notifier).completeOnboarding();
+                await storage.setBool(StorageKeys.onboardingDone, true);
+                if (context.mounted) {
+                  context.go('/login');
+                }
               },
               child: const Text('Get Started'),
             ),

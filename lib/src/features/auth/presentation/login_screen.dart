@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import 'auth_controller.dart';
+import '../../../core/di/providers.dart';
+import '../../../core/storage/storage_keys.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +16,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -26,18 +29,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    final notifier = ref.read(authControllerProvider.notifier);
-    await notifier.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    setState(() {
+      _loading = true;
+    });
+
+    final storage = ref.read(localStorageProvider);
+    await storage.setString(StorageKeys.authToken, _emailController.text.trim());
+
+    if (mounted) {
+      context.go('/home');
+    }
+
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(authControllerProvider);
-    final isLoading = state.status == AuthStatus.loading;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Sign in')),
       body: Padding(
@@ -73,8 +84,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: isLoading ? null : _submit,
-                  child: isLoading
+                  onPressed: _loading ? null : _submit,
+                  child: _loading
                       ? const SizedBox(
                           width: 24,
                           height: 24,
