@@ -7,6 +7,7 @@ import '../../features/inventory/presentation/screens/add_edit_product_screen.da
 import '../../features/inventory/presentation/screens/product_detail_screen.dart';
 import '../../features/inventory/presentation/screens/product_list_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/scanner/presentation/screens/barcode_scan_screen.dart';
 import '../di/providers.dart';
 import '../storage/storage_keys.dart';
 import 'splash_screen.dart';
@@ -52,6 +53,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => ProductDetailScreen(
           productId: state.pathParameters['id']!,
         ),
+      ),
+      GoRoute(
+        path: '/scanner',
+        builder: (_, __) => const BarcodeScanScreen(),
       ),
     ],
     redirect: (_, state) {
