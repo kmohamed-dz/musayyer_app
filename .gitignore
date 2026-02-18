@@ -19,3 +19,7 @@ build/
 
 # Coverage
 coverage/
+
+# Flutter generated
+.flutter-plugins
+.flutter-plugins-dependencies
