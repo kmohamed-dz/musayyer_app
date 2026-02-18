@@ -44,6 +44,12 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text('Demo products loaded: ${products.length}'),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => context.push('/inventory'),
+                  icon: const Icon(Icons.inventory_2),
+                  label: const Text('Open Inventory'),
+                ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(

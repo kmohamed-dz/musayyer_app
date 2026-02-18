@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/inventory/presentation/screens/add_edit_product_screen.dart';
+import '../../features/inventory/presentation/screens/product_detail_screen.dart';
+import '../../features/inventory/presentation/screens/product_list_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../di/providers.dart';
 import '../storage/storage_keys.dart';
@@ -29,6 +32,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (_, __) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/inventory',
+        builder: (_, __) => const ProductListScreen(),
+      ),
+      GoRoute(
+        path: '/inventory/add',
+        builder: (_, __) => const AddEditProductScreen(),
+      ),
+      GoRoute(
+        path: '/inventory/edit/:id',
+        builder: (_, state) => AddEditProductScreen(
+          productId: state.pathParameters['id'],
+        ),
+      ),
+      GoRoute(
+        path: '/inventory/:id',
+        builder: (_, state) => ProductDetailScreen(
+          productId: state.pathParameters['id']!,
+        ),
       ),
     ],
     redirect: (_, state) {
