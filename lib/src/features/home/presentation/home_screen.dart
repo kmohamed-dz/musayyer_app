@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../../core/db/hive_boxes.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/storage/storage_keys.dart';
+import '../../inventory/data/models/product_model.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -25,40 +28,39 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: const Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome back, Operator',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            Text('You are ready to start building your Musayyer modules.'),
-            SizedBox(height: 24),
-            Card(
-              child: ListTile(
-                leading: Icon(Icons.inventory_2),
-                title: Text('Inventory'),
-                subtitle: Text('Track products and stock levels.'),
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: Icon(Icons.receipt_long),
-                title: Text('Invoices'),
-                subtitle: Text('Review daily and monthly sales.'),
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: Icon(Icons.people_alt),
-                title: Text('Debts'),
-                subtitle: Text('Monitor customer balances and payments.'),
-              ),
-            ),
-          ],
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ValueListenableBuilder(
+          valueListenable: Hive.box<ProductModel>(HiveBoxes.products).listenable(),
+          builder: (_, Box<ProductModel> box, __) {
+            final products = box.values.toList();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome back, Operator',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Text('Demo products loaded: ${products.length}'),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: products.length,
+                    itemBuilder: (_, index) {
+                      final product = products[index];
+                      return ListTile(
+                        title: Text(product.name),
+                        subtitle: Text('${product.price.toStringAsFixed(0)} DZD'),
+                        trailing: Text('Stock: ${product.stock}'),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
