@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'state/app_state.dart';
 import 'ui/inventory/inventory_screen.dart';
 
-Future<void> main() {
+void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppState(),

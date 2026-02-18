@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
@@ -13,9 +12,28 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  bool _hasPermission = true;
-  bool _isHandling = false;
-  String? _lastNotFound;
+  final TextEditingController _barcodeController = TextEditingController();
+
+  @override
+  void dispose() {
+    _barcodeController.dispose();
+    super.dispose();
+  }
+
+  void _submitBarcode(AppState state) {
+    final barcode = _barcodeController.text.trim();
+    if (barcode.isEmpty) return;
+
+    final product = state.findProductByBarcode(barcode);
+    if (product != null) {
+      Navigator.pop<Product>(context, product);
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Product not found')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,38 +41,26 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Barcode')),
-      body: _hasPermission
-          ? MobileScanner(
-              onDetect: (capture) async {
-                if (_isHandling) return;
-                if (capture.barcodes.isEmpty) return;
-                final barcode = capture.barcodes.first.rawValue;
-                if (barcode == null || barcode.isEmpty) return;
-
-                final product = state.findProductByBarcode(barcode);
-                if (product != null) {
-                  _isHandling = true;
-                  if (mounted) {
-                    Navigator.pop<Product>(context, product);
-                  }
-                } else if (_lastNotFound != barcode) {
-                  _lastNotFound = barcode;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Product not found')),
-                  );
-                }
-              },
-              onPermissionSet: (_, permission) {
-                if (!permission) {
-                  setState(() {
-                    _hasPermission = false;
-                  });
-                }
-              },
-            )
-          : const Center(
-              child: Text('Camera permission denied. Please enable it in settings.'),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: _barcodeController,
+              decoration: const InputDecoration(
+                labelText: 'Barcode',
+                hintText: 'Enter barcode manually',
+              ),
+              onSubmitted: (_) => _submitBarcode(state),
             ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () => _submitBarcode(state),
+              child: const Text('Find Product'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

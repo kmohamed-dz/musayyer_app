@@ -52,7 +52,7 @@ class AppState extends ChangeNotifier {
       final index = _products.indexWhere((product) => product.id == item.productId);
       if (index == -1) continue;
       final product = _products[index];
-      final newQty = (product.quantity - item.qty).clamp(0, double.infinity);
+      final newQty = (product.quantity - item.qty).clamp(0, double.infinity).toDouble();
       _products[index] = product.copyWith(quantity: newQty);
     }
 

@@ -12,11 +12,13 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
+    final baseUrl = _apiClient.client.options.baseUrl;
+
     // TODO: Replace with real API endpoint.
     final response = await Future<Response<Map<String, dynamic>>>(() async {
       await Future.delayed(const Duration(milliseconds: 400));
       return Response(
-        requestOptions: RequestOptions(path: '/auth/login'),
+        requestOptions: RequestOptions(path: '$baseUrl/auth/login'),
         data: {
           'token': 'mock-token-${DateTime.now().millisecondsSinceEpoch}',
           'user': {
