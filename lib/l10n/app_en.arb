@@ -1,6 +1,7 @@
 {
   "@@locale": "en",
   "appName": "Musayyer",
+  "appNameLatin": "Musayyer",
   "inventory": "Inventory",
   "pos": "Point of Sale",
   "invoices": "Invoices",

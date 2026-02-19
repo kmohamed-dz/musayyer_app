@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.musayyer.musayyer_app"
+    namespace = "com.musayyer.app"
     compileSdk = 34
     ndkVersion = flutter.ndkVersion
 

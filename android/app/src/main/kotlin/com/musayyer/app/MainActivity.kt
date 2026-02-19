@@ -1,4 +1,4 @@
-package com.musayyer.musayyer_app
+package com.musayyer.app
 
 import android.content.Intent
 import android.net.Uri

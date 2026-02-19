@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
-        android:label="musayyer_app"
+        android:label="مسّير"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,6 +1,7 @@
 {
   "@@locale": "ar",
   "appName": "مسّير",
+  "appNameLatin": "Musayyer",
   "inventory": "المخزون",
   "pos": "نقطة البيع",
   "invoices": "الفواتير",
