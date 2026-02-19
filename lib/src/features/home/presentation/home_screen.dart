@@ -56,6 +56,12 @@ class HomeScreen extends ConsumerWidget {
                   icon: const Icon(Icons.point_of_sale),
                   label: const Text('Open POS'),
                 ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: () => context.push('/invoices'),
+                  icon: const Icon(Icons.receipt_long),
+                  label: const Text('Open Invoices'),
+                ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(
