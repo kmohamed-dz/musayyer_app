@@ -37,7 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await storage.setString(StorageKeys.authToken, _emailController.text.trim());
 
     if (mounted) {
-      context.go('/home');
+      context.go('/dashboard');
     }
 
     if (mounted) {

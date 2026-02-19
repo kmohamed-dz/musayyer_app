@@ -5,8 +5,8 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/customers/presentation/screens/add_customer_screen.dart';
 import '../../features/customers/presentation/screens/customer_detail_screen.dart';
 import '../../features/customers/presentation/screens/customer_list_screen.dart';
+import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/debt/presentation/screens/debt_list_screen.dart';
-import '../../features/home/presentation/home_screen.dart';
 import '../../features/inventory/presentation/screens/add_edit_product_screen.dart';
 import '../../features/inventory/presentation/screens/product_detail_screen.dart';
 import '../../features/inventory/presentation/screens/product_list_screen.dart';
@@ -39,7 +39,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (_, __) => const HomeScreen(),
+        builder: (_, __) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard',
+        builder: (_, __) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/inventory',
@@ -113,7 +117,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (path == '/splash' || path == '/onboarding' || path == '/login') {
-        return '/home';
+        return '/dashboard';
       }
 
       return null;
