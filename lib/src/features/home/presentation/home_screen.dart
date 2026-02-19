@@ -62,6 +62,18 @@ class HomeScreen extends ConsumerWidget {
                   icon: const Icon(Icons.receipt_long),
                   label: const Text('Open Invoices'),
                 ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: () => context.push('/customers'),
+                  icon: const Icon(Icons.people),
+                  label: const Text('Open Customers'),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: () => context.push('/debts'),
+                  icon: const Icon(Icons.account_balance_wallet),
+                  label: const Text('Open Debts'),
+                ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(

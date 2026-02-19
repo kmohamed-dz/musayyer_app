@@ -2,6 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/customers/presentation/screens/add_customer_screen.dart';
+import '../../features/customers/presentation/screens/customer_detail_screen.dart';
+import '../../features/customers/presentation/screens/customer_list_screen.dart';
+import '../../features/debt/presentation/screens/debt_list_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/inventory/presentation/screens/add_edit_product_screen.dart';
 import '../../features/inventory/presentation/screens/product_detail_screen.dart';
@@ -70,6 +74,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/invoices',
         builder: (_, __) => const InvoiceListScreen(),
+      ),
+      GoRoute(
+        path: '/customers',
+        builder: (_, __) => const CustomerListScreen(),
+      ),
+      GoRoute(
+        path: '/customers/add',
+        builder: (_, __) => const AddCustomerScreen(),
+      ),
+      GoRoute(
+        path: '/customers/:id',
+        builder: (_, state) => CustomerDetailScreen(
+          customerId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/debts',
+        builder: (_, __) => const DebtListScreen(),
       ),
       GoRoute(
         path: '/scanner',
