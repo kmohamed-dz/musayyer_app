@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/utils/app_settings_opener.dart';
@@ -59,7 +60,7 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen> {
 
               return Center(
                 child: Text(
-                  error.errorDetails?.message ?? 'Camera error',
+                  error.errorDetails?.message ?? AppLocalizations.of(context)!.cameraError,
                   style: const TextStyle(color: Colors.white),
                 ),
               );
@@ -113,6 +114,7 @@ class _PermissionDeniedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -121,20 +123,20 @@ class _PermissionDeniedView extends StatelessWidget {
           children: [
             const Icon(Icons.no_photography, color: Colors.white, size: 48),
             const SizedBox(height: 12),
-            const Text(
-              'Camera permission denied',
-              style: TextStyle(color: Colors.white, fontSize: 18),
+            Text(
+              l10n.cameraPermissionDenied,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Please allow camera access in settings to scan barcodes.',
+            Text(
+              l10n.enableCameraPermissionInSettings,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
+              style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: onOpenSettings,
-              child: const Text('Open Settings'),
+              child: Text(l10n.openSettings),
             ),
           ],
         ),

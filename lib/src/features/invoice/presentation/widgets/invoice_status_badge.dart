@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class InvoiceStatusBadge extends StatelessWidget {
   const InvoiceStatusBadge({
@@ -32,6 +33,13 @@ class InvoiceStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final label = switch (status) {
+      'paid' => l10n.paid,
+      'partial' => l10n.partial,
+      _ => l10n.unpaid,
+    };
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -39,7 +47,7 @@ class InvoiceStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
-        status,
+        label,
         style: TextStyle(
           color: _foreground(),
           fontWeight: FontWeight.w700,

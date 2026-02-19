@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -19,11 +20,12 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final debtBox = Hive.box<DebtModel>(HiveBoxes.debts);
     final customerBox = Hive.box<CustomerModel>(HiveBoxes.customers);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Debts')),
+      appBar: AppBar(title: Text(l10n.debts)),
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -32,17 +34,17 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
               spacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('All'),
+                  label: Text(l10n.all),
                   selected: _filter == 'all',
                   onSelected: (_) => setState(() => _filter = 'all'),
                 ),
                 ChoiceChip(
-                  label: const Text('Overdue'),
+                  label: Text(l10n.overdue),
                   selected: _filter == 'overdue',
                   onSelected: (_) => setState(() => _filter = 'overdue'),
                 ),
                 ChoiceChip(
-                  label: const Text('Recent'),
+                  label: Text(l10n.recent),
                   selected: _filter == 'recent',
                   onSelected: (_) => setState(() => _filter = 'recent'),
                 ),
@@ -70,21 +72,23 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
                     ..sort((a, b) => b.remainingAmount.compareTo(a.remainingAmount));
 
                   if (debts.isEmpty) {
-                    return const Center(child: Text('No open debts'));
+                    return Center(child: Text(l10n.noOpenDebts));
                   }
 
                   return ListView.builder(
                     itemCount: debts.length,
                     itemBuilder: (_, index) {
                       final debt = debts[index];
-                      final customerName = customerBox.get(debt.customerId)?.name ?? 'Unknown';
+                      final customerName = customerBox.get(debt.customerId)?.name ?? l10n.unknownCustomer;
                       final days = now.difference(debt.createdAt).inDays;
 
                       return Card(
                         child: ListTile(
                           title: Text(customerName),
                           subtitle: Text(
-                            'Original ${debt.amount.toStringAsFixed(2)} | Remaining ${debt.remainingAmount.toStringAsFixed(2)}\n$days days ago',
+                            '${l10n.original} ${debt.amount.toStringAsFixed(2)} ${l10n.dzd} | '
+                            '${l10n.remaining} ${debt.remainingAmount.toStringAsFixed(2)} ${l10n.dzd}\n'
+                            '${l10n.daysAgo(days)}',
                           ),
                           isThreeLine: true,
                           trailing: IconButton(
@@ -105,6 +109,7 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
   }
 
   Future<void> _recordPayment(DebtModel debt) async {
+    final l10n = AppLocalizations.of(context)!;
     final amountController = TextEditingController();
     final notesController = TextEditingController();
     DateTime selectedDate = DateTime.now();
@@ -115,7 +120,7 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: const Text('Record Payment'),
+              title: Text(l10n.recordPayment),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -123,23 +128,25 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
                     TextField(
                       controller: amountController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Amount',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.amount,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Notes',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.notes,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Expanded(child: Text(selectedDate.toIso8601String().split('T').first)),
+                        Expanded(
+                          child: Text('${l10n.date}: ${selectedDate.toIso8601String().split('T').first}'),
+                        ),
                         TextButton(
                           onPressed: () async {
                             final picked = await showDatePicker(
@@ -154,7 +161,7 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
                               });
                             }
                           },
-                          child: const Text('Pick Date'),
+                          child: Text(l10n.pickDate),
                         ),
                       ],
                     ),
@@ -164,11 +171,11 @@ class _DebtListScreenState extends ConsumerState<DebtListScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancel),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: const Text('Save'),
+                  child: Text(l10n.save),
                 ),
               ],
             );

@@ -8,12 +8,43 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../data/models/invoice_item_model.dart';
 import '../../data/models/invoice_model.dart';
 
+class InvoicePdfTexts {
+  InvoicePdfTexts({
+    required this.invoice,
+    required this.date,
+    required this.customer,
+    required this.product,
+    required this.qty,
+    required this.unitPrice,
+    required this.subtotal,
+    required this.total,
+    required this.paid,
+    required this.remaining,
+    required this.thankYou,
+    required this.currency,
+  });
+
+  final String invoice;
+  final String date;
+  final String customer;
+  final String product;
+  final String qty;
+  final String unitPrice;
+  final String subtotal;
+  final String total;
+  final String paid;
+  final String remaining;
+  final String thankYou;
+  final String currency;
+}
+
 class InvoicePdfGenerator {
   Future<String> generate({
     required InvoiceModel invoice,
     required List<InvoiceItemModel> items,
     required String shopName,
     required String customerName,
+    required InvoicePdfTexts texts,
   }) async {
     final pdf = pw.Document();
 
@@ -31,12 +62,12 @@ class InvoicePdfGenerator {
               child: pw.Text(shopName, style: const pw.TextStyle(fontSize: 24)),
             ),
             pw.SizedBox(height: 8),
-            pw.Text('Invoice #: ${invoice.id.substring(0, 8)}'),
-            pw.Text('Date: ${invoice.createdAt}'),
-            pw.Text('Customer: $customerName'),
+            pw.Text('${texts.invoice} #: ${invoice.id.substring(0, 8)}'),
+            pw.Text('${texts.date}: ${invoice.createdAt}'),
+            pw.Text('${texts.customer}: $customerName'),
             pw.SizedBox(height: 12),
             pw.TableHelper.fromTextArray(
-              headers: const ['Product', 'Qty', 'Unit Price', 'Subtotal'],
+              headers: [texts.product, texts.qty, texts.unitPrice, texts.subtotal],
               data: items
                   .map(
                     (item) => [
@@ -54,16 +85,16 @@ class InvoicePdfGenerator {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text('Total: ${invoice.totalAmount.toStringAsFixed(2)} DZD'),
-                  pw.Text('Paid: ${invoice.paidAmount.toStringAsFixed(2)} DZD'),
+                  pw.Text('${texts.total}: ${invoice.totalAmount.toStringAsFixed(2)} ${texts.currency}'),
+                  pw.Text('${texts.paid}: ${invoice.paidAmount.toStringAsFixed(2)} ${texts.currency}'),
                   pw.Text(
-                    'Remaining: ${(invoice.totalAmount - invoice.paidAmount).toStringAsFixed(2)} DZD',
+                    '${texts.remaining}: ${(invoice.totalAmount - invoice.paidAmount).toStringAsFixed(2)} ${texts.currency}',
                   ),
                 ],
               ),
             ),
             pw.SizedBox(height: 20),
-            pw.Center(child: pw.Text('Thank you for your purchase')),
+            pw.Center(child: pw.Text(texts.thankYou)),
           ];
         },
       ),

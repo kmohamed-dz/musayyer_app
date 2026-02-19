@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SearchBarWidget extends StatelessWidget {
   const SearchBarWidget({
@@ -12,11 +13,13 @@ class SearchBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return TextField(
       controller: controller,
       onChanged: onChanged,
       decoration: InputDecoration(
-        hintText: 'Search products...',
+        hintText: l10n.searchProducts,
         prefixIcon: const Icon(Icons.search),
         suffixIcon: controller.text.isEmpty
             ? null

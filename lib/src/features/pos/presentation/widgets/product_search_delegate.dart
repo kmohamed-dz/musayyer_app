@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../inventory/domain/entities/product.dart';
@@ -29,21 +30,22 @@ class ProductSearchDelegate extends SearchDelegate<Product?> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return _buildList();
+    return _buildList(context);
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    return _buildList();
+    return _buildList(context);
   }
 
-  Widget _buildList() {
+  Widget _buildList(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final productsAsync = ref.watch(productSearchProvider(query));
 
     return productsAsync.when(
       data: (products) {
         if (products.isEmpty) {
-          return const Center(child: Text('No matching products'));
+          return Center(child: Text(l10n.noMatchingProducts));
         }
         return ListView.builder(
           itemCount: products.length,
@@ -51,14 +53,14 @@ class ProductSearchDelegate extends SearchDelegate<Product?> {
             final product = products[index];
             return ListTile(
               title: Text(product.nameAr.isNotEmpty ? product.nameAr : product.name),
-              subtitle: Text('${product.price.toStringAsFixed(2)} DZD'),
+              subtitle: Text('${product.price.toStringAsFixed(2)} ${l10n.dzd}'),
               onTap: () => close(context, product),
             );
           },
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(child: Text('Error: $error')),
+      error: (error, _) => Center(child: Text(error.toString())),
     );
   }
 }

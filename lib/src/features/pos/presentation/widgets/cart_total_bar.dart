@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CartTotalBar extends StatelessWidget {
   const CartTotalBar({
@@ -12,6 +13,8 @@ class CartTotalBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -22,13 +25,13 @@ class CartTotalBar extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'TOTAL: ${total.toStringAsFixed(2)} DZD',
+              '${l10n.total}: ${total.toStringAsFixed(2)} ${l10n.dzd}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           FilledButton(
             onPressed: onCheckout,
-            child: const Text('CHECKOUT'),
+            child: Text(l10n.checkout),
           ),
         ],
       ),

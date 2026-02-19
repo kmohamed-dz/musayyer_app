@@ -15,6 +15,7 @@ import '../../features/invoice/presentation/screens/invoice_list_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/pos/presentation/screens/pos_screen.dart';
 import '../../features/scanner/presentation/screens/barcode_scan_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../di/providers.dart';
 import '../storage/storage_keys.dart';
 import 'splash_screen.dart';
@@ -96,6 +97,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/debts',
         builder: (_, __) => const DebtListScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, __) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/scanner',

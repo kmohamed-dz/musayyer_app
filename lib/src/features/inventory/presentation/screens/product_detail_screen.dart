@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,11 +15,12 @@ class ProductDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final productAsync = ref.watch(productByIdProvider(productId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Product Details'),
+        title: Text(l10n.productDetails),
         actions: [
           IconButton(
             onPressed: () => context.push('/inventory/edit/$productId'),
@@ -32,27 +34,27 @@ class ProductDetailScreen extends ConsumerWidget {
       ),
       body: productAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        error: (error, _) => Center(child: Text(error.toString())),
         data: (product) {
           if (product == null) {
-            return const Center(child: Text('Product not found'));
+            return Center(child: Text(l10n.productNotFound));
           }
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _InfoTile(label: 'Name (AR)', value: product.nameAr),
-              _InfoTile(label: 'Name (FR)', value: product.nameFr),
-              _InfoTile(label: 'Price', value: '${product.price.toStringAsFixed(2)} DZD'),
+              _InfoTile(label: l10n.nameAr, value: product.nameAr),
+              _InfoTile(label: l10n.nameFr, value: product.nameFr),
+              _InfoTile(label: l10n.price, value: '${product.price.toStringAsFixed(2)} ${l10n.dzd}'),
               _InfoTile(
-                label: 'Cost Price',
-                value: '${product.costPrice.toStringAsFixed(2)} DZD',
+                label: l10n.costPrice,
+                value: '${product.costPrice.toStringAsFixed(2)} ${l10n.dzd}',
               ),
-              _InfoTile(label: 'Stock', value: '${product.stock} ${product.unit}'),
-              _InfoTile(label: 'Category', value: product.category ?? '-'),
-              _InfoTile(label: 'Barcode', value: product.barcode ?? '-'),
+              _InfoTile(label: l10n.stock, value: '${product.stock} ${product.unit}'),
+              _InfoTile(label: l10n.category, value: product.category ?? '-'),
+              _InfoTile(label: l10n.barcode, value: product.barcode ?? '-'),
               _InfoTile(
-                label: 'Profit Margin',
+                label: l10n.profitMargin,
                 value: '${product.profitMargin.toStringAsFixed(2)}%',
               ),
             ],
@@ -63,19 +65,21 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete product'),
-        content: const Text('Are you sure you want to delete this product?'),
+        title: Text(l10n.deleteProductTitle),
+        content: Text(l10n.deleteProductConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

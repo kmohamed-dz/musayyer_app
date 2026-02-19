@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -24,20 +25,21 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final box = Hive.box<CustomerModel>(HiveBoxes.customers);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Customers')),
+      appBar: AppBar(title: Text(l10n.customers)),
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search customer',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l10n.searchCustomer,
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
               ),
               onChanged: (value) {
                 setState(() {
@@ -57,7 +59,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                     ..sort((a, b) => a.name.compareTo(b.name));
 
                   if (customers.isEmpty) {
-                    return const Center(child: Text('No customers'));
+                    return Center(child: Text(l10n.noCustomers));
                   }
 
                   return ListView.builder(
@@ -93,6 +95,7 @@ class _DebtBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasDebt = amount > 0;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -101,7 +104,7 @@ class _DebtBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        '${amount.toStringAsFixed(2)} DZD',
+        '${amount.toStringAsFixed(2)} ${l10n.dzd}',
         style: TextStyle(
           color: hasDebt ? Colors.red.shade900 : Colors.green.shade900,
           fontWeight: FontWeight.bold,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class StockBadge extends StatelessWidget {
   const StockBadge({
@@ -30,6 +31,8 @@ class StockBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -37,7 +40,7 @@ class StockBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        'Stock: $stock',
+        l10n.stockValue(stock),
         style: TextStyle(
           color: _foregroundColor(),
           fontWeight: FontWeight.w600,

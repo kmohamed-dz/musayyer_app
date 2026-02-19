@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -26,12 +27,13 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final invoicesAsync = ref.watch(filteredInvoicesProvider);
     final selectedFilter = ref.watch(invoiceStatusFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invoices'),
+        title: Text(l10n.invoices),
       ),
       body: Padding(
         padding: const EdgeInsets.all(12),
@@ -39,10 +41,10 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
           children: [
             TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search invoice ID or customer',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l10n.searchInvoiceByIdOrCustomer,
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
               ),
               onChanged: (value) {
                 ref.read(invoiceSearchQueryProvider.notifier).state = value;
@@ -53,25 +55,25 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
               spacing: 8,
               children: [
                 _FilterChip(
-                  label: 'All',
+                  label: l10n.all,
                   value: 'all',
                   selected: selectedFilter,
                   onSelected: (value) => ref.read(invoiceStatusFilterProvider.notifier).state = value,
                 ),
                 _FilterChip(
-                  label: 'Paid',
+                  label: l10n.paid,
                   value: 'paid',
                   selected: selectedFilter,
                   onSelected: (value) => ref.read(invoiceStatusFilterProvider.notifier).state = value,
                 ),
                 _FilterChip(
-                  label: 'Unpaid',
+                  label: l10n.unpaid,
                   value: 'unpaid',
                   selected: selectedFilter,
                   onSelected: (value) => ref.read(invoiceStatusFilterProvider.notifier).state = value,
                 ),
                 _FilterChip(
-                  label: 'Partial',
+                  label: l10n.partial,
                   value: 'partial',
                   selected: selectedFilter,
                   onSelected: (value) => ref.read(invoiceStatusFilterProvider.notifier).state = value,
@@ -83,7 +85,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
               child: invoicesAsync.when(
                 data: (invoices) {
                   if (invoices.isEmpty) {
-                    return const Center(child: Text('No invoices'));
+                    return Center(child: Text(l10n.noInvoices));
                   }
 
                   final customersBox = Hive.box<CustomerModel>(HiveBoxes.customers);
@@ -93,8 +95,8 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                     itemBuilder: (_, index) {
                       final invoice = invoices[index];
                       final customerName = invoice.customerId == null
-                          ? 'Cash sale'
-                          : (customersBox.get(invoice.customerId)?.name ?? 'Unknown customer');
+                          ? l10n.cashSale
+                          : (customersBox.get(invoice.customerId)?.name ?? l10n.unknownCustomer);
 
                       return InvoiceCard(
                         invoice: invoice,
@@ -105,7 +107,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(child: Text('Error: $error')),
+                error: (error, _) => Center(child: Text(error.toString())),
               ),
             ),
           ],

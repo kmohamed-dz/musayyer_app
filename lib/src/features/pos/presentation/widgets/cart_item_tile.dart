@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../domain/entities/cart_item.dart';
 
@@ -18,6 +19,7 @@ class CartItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -29,7 +31,7 @@ class CartItemTile extends StatelessWidget {
                 children: [
                   Text(item.product.nameAr.isNotEmpty ? item.product.nameAr : item.product.name),
                   const SizedBox(height: 4),
-                  Text('${item.product.price.toStringAsFixed(2)} DZD'),
+                  Text('${item.product.price.toStringAsFixed(2)} ${l10n.dzd}'),
                 ],
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../core/db/hive_boxes.dart';
@@ -50,34 +51,35 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final customers = Hive.box<CustomerModel>(HiveBoxes.customers).values.toList();
     final changeDue = _amountPaid - widget.total;
 
     return AlertDialog(
-      title: const Text('Checkout'),
+      title: Text(l10n.checkoutTitle),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _RowItem(label: 'Total', value: '${widget.total.toStringAsFixed(2)} DZD'),
+            _RowItem(label: l10n.total, value: '${widget.total.toStringAsFixed(2)} ${l10n.dzd}'),
             const SizedBox(height: 12),
             TextField(
               controller: _amountPaidController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Amount Paid',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.amountPaid,
+                border: const OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 8),
-            _RowItem(label: 'Change Due', value: '${changeDue.toStringAsFixed(2)} DZD'),
+            _RowItem(label: l10n.changeDue, value: '${changeDue.toStringAsFixed(2)} ${l10n.dzd}'),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _selectedCustomerId,
-              decoration: const InputDecoration(
-                labelText: 'Customer (for debt)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.customerForDebt,
+                border: const OutlineInputBorder(),
               ),
               items: customers
                   .map(
@@ -99,7 +101,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         OutlinedButton(
           onPressed: () {
@@ -110,13 +112,13 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
               ),
             );
           },
-          child: const Text('Pay Cash'),
+          child: Text(l10n.payCash),
         ),
         FilledButton(
           onPressed: () {
             if (_selectedCustomerId == null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Select customer to record debt')),
+                SnackBar(content: Text(l10n.selectCustomerForDebt)),
               );
               return;
             }
@@ -129,7 +131,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
               ),
             );
           },
-          child: const Text('Record as Debt'),
+          child: Text(l10n.recordAsDebt),
         ),
       ],
     );

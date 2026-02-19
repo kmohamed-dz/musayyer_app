@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -36,6 +37,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _scanAndAddProduct() async {
+    final l10n = AppLocalizations.of(context)!;
     final barcode = await context.push<String>('/scanner');
     if (barcode == null || barcode.isEmpty || !mounted) {
       return;
@@ -45,7 +47,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     if (product == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product not found for scanned barcode')),
+          SnackBar(content: Text(l10n.productNotFoundForScannedBarcode)),
         );
       }
       return;
@@ -55,10 +57,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _checkout() async {
+    final l10n = AppLocalizations.of(context)!;
     final cart = ref.read(cartProvider);
     if (cart.items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cart is empty')),
+        SnackBar(content: Text(l10n.cartEmpty)),
       );
       return;
     }
@@ -74,7 +77,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     if (result.action == CheckoutAction.payCash && result.amountPaid < cart.total) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Amount paid must cover the total for cash checkout')),
+        SnackBar(content: Text(l10n.amountPaidMustCoverTotal)),
       );
       return;
     }
@@ -165,6 +168,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cart = ref.watch(cartProvider);
     final productsAsync = _query.trim().isEmpty
         ? ref.watch(productsProvider)
@@ -172,7 +176,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Point of Sale'),
+        title: Text(l10n.pointOfSale),
         actions: [
           IconButton(
             onPressed: () async {
@@ -197,10 +201,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 Expanded(
                   child: TextField(
                     controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Search product',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      hintText: l10n.searchProduct,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.search),
                     ),
                     onChanged: (value) {
                       setState(() {
@@ -224,9 +228,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Products',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        Text(
+                          l10n.products,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Expanded(
@@ -237,7 +241,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   ref.read(cartProvider.notifier).addProduct(product),
                             ),
                             loading: () => const Center(child: CircularProgressIndicator()),
-                            error: (error, _) => Center(child: Text('Error: $error')),
+                            error: (error, _) => Center(child: Text(error.toString())),
                           ),
                         ),
                       ],
@@ -249,13 +253,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Cart (${cart.itemCount})',
+                          '${l10n.cart} (${cart.itemCount})',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Expanded(
                           child: cart.items.isEmpty
-                              ? const Center(child: Text('No items in cart'))
+                              ? Center(child: Text(l10n.noItemsInCart))
                               : ListView.builder(
                                   itemCount: cart.items.length,
                                   itemBuilder: (_, index) {
@@ -303,8 +307,9 @@ class _ProductResultList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (products.isEmpty) {
-      return const Center(child: Text('No matching products'));
+      return Center(child: Text(l10n.noMatchingProducts));
     }
 
     return ListView.builder(
@@ -316,7 +321,7 @@ class _ProductResultList extends StatelessWidget {
             onTap: () => onTap(product),
             title: Text(product.nameAr.isNotEmpty ? product.nameAr : product.name),
             subtitle: Text(
-              '${product.price.toStringAsFixed(2)} DZD • Stock ${product.stock}',
+              '${product.price.toStringAsFixed(2)} ${l10n.dzd} • ${l10n.stock} ${product.stock}',
             ),
             trailing: const Icon(Icons.add),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -50,8 +51,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final storage = ref.read(localStorageProvider);
-    final shopName = storage.getString(StorageKeys.shopName) ?? 'Musayyer';
+    final shopName = storage.getString(StorageKeys.shopName) ?? l10n.appName;
     final todayRevenue = ref.watch(todayRevenueProvider);
     final todaySalesCount = ref.watch(todaySalesCountProvider);
     final totalUnpaidDebts = ref.watch(totalUnpaidDebtsProvider);
@@ -63,61 +65,70 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final debtCustomersCount = debts.where((debt) => debt.remainingAmount > 0).map((d) => d.customerId).toSet().length;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: Text(l10n.dashboard),
+        actions: [
+          IconButton(
+            onPressed: () => context.push('/settings'),
+            icon: const Icon(Icons.settings),
+            tooltip: l10n.settings,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Good morning, $shopName',
+            '${l10n.goodMorning}, $shopName',
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Text('Today: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}'),
+          Text('${l10n.today}: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}'),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: _KpiCard(
-                  title: "Today's Revenue",
-                  value: '${todayRevenue.toStringAsFixed(2)} DZD',
+                  title: l10n.todayRevenue,
+                  value: '${todayRevenue.toStringAsFixed(2)} ${l10n.dzd}',
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _KpiCard(
-                  title: "Today's Sales Count",
-                  value: '$todaySalesCount sales',
+                  title: l10n.todaySales,
+                  value: l10n.salesCount(todaySalesCount),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           _KpiCard(
-            title: 'Total Unpaid Debts',
-            value: '${totalUnpaidDebts.toStringAsFixed(2)} DZD ($debtCustomersCount customers)',
+            title: l10n.totalDebts,
+            value: '${totalUnpaidDebts.toStringAsFixed(2)} ${l10n.dzd} (${l10n.customersCount(debtCustomersCount)})',
           ),
           const SizedBox(height: 16),
-          const Text('Top Products This Week', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.topProductsWeek, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: topProducts.isEmpty
-                  ? const Text('No sales this week')
+                  ? Text(l10n.noSalesThisWeek)
                   : Column(
                       children: [
                         for (var i = 0; i < topProducts.length; i++)
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text('${i + 1}. ${topProducts[i].name}'),
-                            trailing: Text('${topProducts[i].units} units'),
+                            trailing: Text('${topProducts[i].units} ${l10n.units}'),
                           ),
                       ],
                     ),
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Weekly Revenue Chart', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.weeklyRevenueChart, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -129,20 +140,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Low Stock Alerts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.lowStockAlerts, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           if (lowStockProducts.isEmpty)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Text('No low stock products'),
+                padding: const EdgeInsets.all(12),
+                child: Text(l10n.noLowStockProducts),
               ),
             ),
           for (final product in lowStockProducts)
             Card(
               child: ListTile(
                 title: Text(product.nameAr.isNotEmpty ? product.nameAr : product.name),
-                subtitle: Text('${product.stock} left'),
+                subtitle: Text(l10n.leftCount(product.stock)),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/inventory/edit/${product.id}'),
               ),

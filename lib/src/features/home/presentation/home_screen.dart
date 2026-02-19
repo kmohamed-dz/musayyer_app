@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -13,9 +14,11 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Musayyer Dashboard'),
+        title: Text(l10n.dashboard),
         actions: [
           IconButton(
             onPressed: () async {
@@ -38,41 +41,41 @@ class HomeScreen extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome back, Operator',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                Text(
+                  '${l10n.welcomeBack}, ${l10n.operator}',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                Text('Demo products loaded: ${products.length}'),
+                Text(l10n.demoProductsLoaded(products.length)),
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: () => context.push('/inventory'),
                   icon: const Icon(Icons.inventory_2),
-                  label: const Text('Open Inventory'),
+                  label: Text(l10n.openInventory),
                 ),
                 const SizedBox(height: 8),
                 FilledButton.icon(
                   onPressed: () => context.push('/pos'),
                   icon: const Icon(Icons.point_of_sale),
-                  label: const Text('Open POS'),
+                  label: Text(l10n.openPos),
                 ),
                 const SizedBox(height: 8),
                 FilledButton.icon(
                   onPressed: () => context.push('/invoices'),
                   icon: const Icon(Icons.receipt_long),
-                  label: const Text('Open Invoices'),
+                  label: Text(l10n.openInvoices),
                 ),
                 const SizedBox(height: 8),
                 FilledButton.icon(
                   onPressed: () => context.push('/customers'),
                   icon: const Icon(Icons.people),
-                  label: const Text('Open Customers'),
+                  label: Text(l10n.openCustomers),
                 ),
                 const SizedBox(height: 8),
                 FilledButton.icon(
                   onPressed: () => context.push('/debts'),
                   icon: const Icon(Icons.account_balance_wallet),
-                  label: const Text('Open Debts'),
+                  label: Text(l10n.openDebts),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -82,8 +85,8 @@ class HomeScreen extends ConsumerWidget {
                       final product = products[index];
                       return ListTile(
                         title: Text(product.name),
-                        subtitle: Text('${product.price.toStringAsFixed(0)} DZD'),
-                        trailing: Text('Stock: ${product.stock}'),
+                        subtitle: Text('${product.price.toStringAsFixed(0)} ${l10n.dzd}'),
+                        trailing: Text(l10n.stockValue(product.stock)),
                       );
                     },
                   ),

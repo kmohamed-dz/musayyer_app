@@ -1,12 +1,15 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/db/hive_boxes.dart';
+import '../../../../core/storage/storage_keys.dart';
 import '../../../customers/data/models/customer_model.dart';
 import '../../../debt/data/models/debt_model.dart';
 import '../../../debt/data/models/payment_model.dart';
@@ -38,29 +41,47 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     return invoice.itemIds.map((id) => itemBox.get(id)).whereType<InvoiceItemModel>().toList();
   }
 
-  String _customerName(InvoiceModel invoice) {
+  String _customerName(InvoiceModel invoice, AppLocalizations l10n) {
     if (invoice.customerId == null) {
-      return 'Cash sale';
+      return l10n.cashSale;
     }
 
     final customer = Hive.box<CustomerModel>(HiveBoxes.customers).get(invoice.customerId);
-    return customer?.name ?? 'Unknown customer';
+    return customer?.name ?? l10n.unknownCustomer;
   }
 
-  Future<void> _exportPdf(InvoiceModel invoice, List<InvoiceItemModel> items) async {
+  Future<void> _exportPdf(
+    InvoiceModel invoice,
+    List<InvoiceItemModel> items,
+    AppLocalizations l10n,
+  ) async {
     setState(() {
       _exporting = true;
     });
 
     try {
-      final shopName =
-          Hive.box<CustomerModel>(HiveBoxes.customers).isEmpty ? 'Musayyer Shop' : 'Musayyer Shop';
+      final prefs = await SharedPreferences.getInstance();
+      final shopName = prefs.getString(StorageKeys.shopName) ?? l10n.appName;
 
       final filePath = await InvoicePdfGenerator().generate(
         invoice: invoice,
         items: items,
         shopName: shopName,
-        customerName: _customerName(invoice),
+        customerName: _customerName(invoice, l10n),
+        texts: InvoicePdfTexts(
+          invoice: l10n.invoice,
+          date: l10n.date,
+          customer: l10n.customer,
+          product: l10n.products,
+          qty: l10n.units,
+          unitPrice: l10n.price,
+          subtotal: l10n.subtotal,
+          total: l10n.total,
+          paid: l10n.paid,
+          remaining: l10n.remaining,
+          thankYou: l10n.thankYou,
+          currency: l10n.dzd,
+        ),
       );
 
       await Share.shareXFiles([XFile(filePath)]);
@@ -74,30 +95,31 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   Future<void> _recordPayment(InvoiceModel invoice) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final notesController = TextEditingController();
 
     final amount = await showDialog<double>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Record Payment'),
+        title: Text(l10n.recordPayment),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: controller,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Amount',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.amount,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.notes,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -105,11 +127,11 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(double.tryParse(controller.text.trim())),
-            child: const Text('Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -178,11 +200,12 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final invoice = _invoice;
     if (invoice == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Invoice')),
-        body: const Center(child: Text('Invoice not found')),
+        appBar: AppBar(title: Text(l10n.invoice)),
+        body: Center(child: Text(l10n.invoiceNotFound)),
       );
     }
 
@@ -191,24 +214,24 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Invoice #${invoice.id.substring(0, 8)}'),
+        title: Text('${l10n.invoice} #${invoice.id.substring(0, 8)}'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Date: ${DateFormat('yyyy-MM-dd HH:mm').format(invoice.createdAt)}'),
-            subtitle: Text('Customer: ${_customerName(invoice)}'),
+            title: Text('${l10n.date}: ${DateFormat('yyyy-MM-dd HH:mm').format(invoice.createdAt)}'),
+            subtitle: Text('${l10n.customer}: ${_customerName(invoice, l10n)}'),
             trailing: InvoiceStatusBadge(status: invoice.status),
           ),
           const SizedBox(height: 12),
           DataTable(
-            columns: const [
-              DataColumn(label: Text('Product')),
-              DataColumn(label: Text('Qty')),
-              DataColumn(label: Text('Unit Price')),
-              DataColumn(label: Text('Subtotal')),
+            columns: [
+              DataColumn(label: Text(l10n.products)),
+              DataColumn(label: Text(l10n.units)),
+              DataColumn(label: Text(l10n.price)),
+              DataColumn(label: Text(l10n.subtotal)),
             ],
             rows: items
                 .map(
@@ -224,13 +247,13 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                 .toList(),
           ),
           const SizedBox(height: 12),
-          _SummaryRow(label: 'Subtotal', value: '${invoice.totalAmount.toStringAsFixed(2)} DZD'),
-          _SummaryRow(label: 'Total', value: '${invoice.totalAmount.toStringAsFixed(2)} DZD'),
-          _SummaryRow(label: 'Paid', value: '${invoice.paidAmount.toStringAsFixed(2)} DZD'),
-          _SummaryRow(label: 'Remaining', value: '${remaining.toStringAsFixed(2)} DZD'),
+          _SummaryRow(label: l10n.subtotal, value: '${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd}'),
+          _SummaryRow(label: l10n.total, value: '${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd}'),
+          _SummaryRow(label: l10n.paid, value: '${invoice.paidAmount.toStringAsFixed(2)} ${l10n.dzd}'),
+          _SummaryRow(label: l10n.remaining, value: '${remaining.toStringAsFixed(2)} ${l10n.dzd}'),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: _exporting ? null : () => _exportPdf(invoice, items),
+            onPressed: _exporting ? null : () => _exportPdf(invoice, items, l10n),
             icon: _exporting
                 ? const SizedBox(
                     width: 16,
@@ -238,7 +261,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.picture_as_pdf),
-            label: const Text('Export PDF'),
+            label: Text(l10n.exportPdf),
           ),
           if (invoice.status == 'unpaid' || invoice.status == 'partial')
             const SizedBox(height: 8),
@@ -246,7 +269,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             OutlinedButton.icon(
               onPressed: () => _recordPayment(invoice),
               icon: const Icon(Icons.payments),
-              label: const Text('Record Payment'),
+              label: Text(l10n.recordPayment),
             ),
         ],
       ),

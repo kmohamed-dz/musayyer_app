@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../domain/entities/product.dart';
 import 'stock_badge.dart';
@@ -15,6 +16,7 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cardColor = product.stock <= 2
         ? Colors.red.shade50
         : product.stock <= 5
@@ -26,7 +28,7 @@ class ProductCard extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         title: Text(product.nameAr.isNotEmpty ? product.nameAr : product.name),
-        subtitle: Text('${product.price.toStringAsFixed(2)} DZD'),
+        subtitle: Text('${product.price.toStringAsFixed(2)} ${l10n.dzd}'),
         trailing: StockBadge(stock: product.stock),
       ),
     );

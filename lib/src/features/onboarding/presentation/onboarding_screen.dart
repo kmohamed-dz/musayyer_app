@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,37 +12,38 @@ class OnboardingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storage = ref.read(localStorageProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Welcome to Musayyer')),
+      appBar: AppBar(title: Text(l10n.welcomeToMusayyer)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Run your store with confidence',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              l10n.runStoreWithConfidence,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Track inventory, manage sales, and stay on top of invoices with a reliable offline-first flow.',
+            Text(
+              l10n.onboardingDescription,
             ),
             const SizedBox(height: 24),
             Expanded(
               child: ListView(
-                children: const [
+                children: [
                   ListTile(
-                    leading: Icon(Icons.check_circle_outline),
-                    title: Text('Offline-first by default'),
+                    leading: const Icon(Icons.check_circle_outline),
+                    title: Text(l10n.offlineFirst),
                   ),
                   ListTile(
-                    leading: Icon(Icons.check_circle_outline),
-                    title: Text('Secure authentication'),
+                    leading: const Icon(Icons.check_circle_outline),
+                    title: Text(l10n.secureAuth),
                   ),
                   ListTile(
-                    leading: Icon(Icons.check_circle_outline),
-                    title: Text('Modular clean architecture'),
+                    leading: const Icon(Icons.check_circle_outline),
+                    title: Text(l10n.modularArchitecture),
                   ),
                 ],
               ),
@@ -53,7 +55,7 @@ class OnboardingScreen extends ConsumerWidget {
                   context.go('/login');
                 }
               },
-              child: const Text('Get Started'),
+              child: Text(l10n.getStarted),
             ),
           ],
         ),

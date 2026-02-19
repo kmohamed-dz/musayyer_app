@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,13 +31,14 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final productsAsync = _query.trim().isEmpty
         ? ref.watch(productsProvider)
         : ref.watch(productSearchProvider(_query));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventory'),
+        title: Text(l10n.inventory),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -58,7 +60,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                   onRefresh: _refresh,
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(child: Text('Error: $error')),
+                error: (error, _) => Center(child: Text(error.toString())),
               ),
             ),
           ],
@@ -83,15 +85,17 @@ class _ProductsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (products.isEmpty) {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: ListView(
-          children: const [
-            SizedBox(height: 80),
-            Icon(Icons.inventory_2_outlined, size: 72, color: Colors.grey),
-            SizedBox(height: 12),
-            Center(child: Text('No products yet')),
+          children: [
+            const SizedBox(height: 80),
+            const Icon(Icons.inventory_2_outlined, size: 72, color: Colors.grey),
+            const SizedBox(height: 12),
+            Center(child: Text(l10n.noProducts)),
           ],
         ),
       );

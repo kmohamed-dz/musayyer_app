@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -127,11 +128,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isEditing = widget.productId != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Product' : 'Add Product'),
+        title: Text(isEditing ? l10n.editProduct : l10n.addProduct),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -141,10 +143,10 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
             children: [
               _buildField(
                 controller: _nameArController,
-                label: 'Name (AR)',
+                label: l10n.nameAr,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Name is required';
+                    return l10n.nameRequired;
                   }
                   return null;
                 },
@@ -152,17 +154,17 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               const SizedBox(height: 12),
               _buildField(
                 controller: _nameFrController,
-                label: 'Name (FR)',
+                label: l10n.nameFr,
               ),
               const SizedBox(height: 12),
               _buildField(
                 controller: _priceController,
-                label: 'Price (DZD)',
+                label: l10n.priceDzd,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   final price = double.tryParse(value ?? '');
                   if (price == null || price <= 0) {
-                    return 'Price must be greater than 0';
+                    return l10n.priceMustBeGreater;
                   }
                   return null;
                 },
@@ -170,12 +172,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               const SizedBox(height: 12),
               _buildField(
                 controller: _costPriceController,
-                label: 'Cost Price',
+                label: l10n.costPrice,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   final cost = double.tryParse(value ?? '');
                   if (cost == null || cost < 0) {
-                    return 'Cost price must be valid';
+                    return l10n.costPriceInvalid;
                   }
                   return null;
                 },
@@ -183,12 +185,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               const SizedBox(height: 12),
               _buildField(
                 controller: _stockController,
-                label: 'Stock Quantity',
+                label: l10n.stockQuantity,
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   final stock = int.tryParse(value ?? '');
                   if (stock == null || stock < 0) {
-                    return 'Stock must be 0 or more';
+                    return l10n.stockMustBeNonNegative;
                   }
                   return null;
                 },
@@ -196,10 +198,10 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               const SizedBox(height: 12),
               _buildField(
                 controller: _unitController,
-                label: 'Unit',
+                label: l10n.unit,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Unit is required';
+                    return l10n.unitRequired;
                   }
                   return null;
                 },
@@ -207,7 +209,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               const SizedBox(height: 12),
               _buildField(
                 controller: _categoryController,
-                label: 'Category',
+                label: l10n.category,
               ),
               const SizedBox(height: 12),
               Row(
@@ -215,7 +217,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                   Expanded(
                     child: _buildField(
                       controller: _barcodeController,
-                      label: 'Barcode',
+                      label: l10n.barcode,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -236,7 +238,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                           height: 24,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save'),
+                      : Text(l10n.save),
                 ),
               ),
             ],

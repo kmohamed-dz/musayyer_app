@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
@@ -49,8 +50,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Customer')),
+      appBar: AppBar(title: Text(l10n.addCustomer)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -59,13 +62,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.name,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Name is required';
+                    return l10n.nameRequired;
                   }
                   return null;
                 },
@@ -73,18 +76,18 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.phone,
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.address,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
@@ -92,7 +95,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _save,
-                  child: const Text('Save'),
+                  child: Text(l10n.save),
                 ),
               ),
             ],
