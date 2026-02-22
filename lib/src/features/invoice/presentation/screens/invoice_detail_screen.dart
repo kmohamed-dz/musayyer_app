@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -13,12 +14,13 @@ import '../../../../core/storage/storage_keys.dart';
 import '../../../customers/data/models/customer_model.dart';
 import '../../../debt/data/models/debt_model.dart';
 import '../../../debt/data/models/payment_model.dart';
+import '../../domain/entities/invoice.dart';
+import '../../domain/entities/invoice_item.dart';
 import '../pdf/invoice_pdf_generator.dart';
+import '../providers/invoice_providers.dart';
 import '../widgets/invoice_status_badge.dart';
-import '../../data/models/invoice_item_model.dart';
-import '../../data/models/invoice_model.dart';
 
-class InvoiceDetailScreen extends StatefulWidget {
+class InvoiceDetailScreen extends ConsumerStatefulWidget {
   const InvoiceDetailScreen({
     super.key,
     required this.invoiceId,
@@ -27,32 +29,26 @@ class InvoiceDetailScreen extends StatefulWidget {
   final String invoiceId;
 
   @override
-  State<InvoiceDetailScreen> createState() => _InvoiceDetailScreenState();
+  ConsumerState<InvoiceDetailScreen> createState() =>
+      _InvoiceDetailScreenState();
 }
 
-class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
+class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
   bool _exporting = false;
 
-  InvoiceModel? get _invoice =>
-      Hive.box<InvoiceModel>(HiveBoxes.invoices).get(widget.invoiceId);
-
-  List<InvoiceItemModel> _items(InvoiceModel invoice) {
-    final itemBox = Hive.box<InvoiceItemModel>(HiveBoxes.invoiceItems);
-    return invoice.itemIds.map((id) => itemBox.get(id)).whereType<InvoiceItemModel>().toList();
-  }
-
-  String _customerName(InvoiceModel invoice, AppLocalizations l10n) {
+  String _customerName(Invoice invoice, AppLocalizations l10n) {
     if (invoice.customerId == null) {
       return l10n.cashSale;
     }
 
-    final customer = Hive.box<CustomerModel>(HiveBoxes.customers).get(invoice.customerId);
+    final customer =
+        Hive.box<CustomerModel>(HiveBoxes.customers).get(invoice.customerId);
     return customer?.name ?? l10n.unknownCustomer;
   }
 
   Future<void> _exportPdf(
-    InvoiceModel invoice,
-    List<InvoiceItemModel> items,
+    Invoice invoice,
+    List<InvoiceItem> items,
     AppLocalizations l10n,
   ) async {
     setState(() {
@@ -84,7 +80,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         ),
       );
 
-      await Share.shareXFiles([XFile(filePath)]);
+      await SharePlus.instance.share(
+        ShareParams(files: <XFile>[XFile(filePath)]),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -94,7 +92,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 
-  Future<void> _recordPayment(InvoiceModel invoice) async {
+  Future<void> _recordPayment(Invoice invoice) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final notesController = TextEditingController();
@@ -108,7 +106,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           children: [
             TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: l10n.amount,
                 border: const OutlineInputBorder(),
@@ -130,7 +129,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             child: Text(l10n.cancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(double.tryParse(controller.text.trim())),
+            onPressed: () => Navigator.of(context)
+                .pop(double.tryParse(controller.text.trim())),
             child: Text(l10n.save),
           ),
         ],
@@ -142,9 +142,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       return;
     }
 
-    final remaining = invoice.totalAmount - invoice.paidAmount;
-    final paymentAmount = min(parsedAmount, remaining);
-
+    final paymentAmount = min(parsedAmount, invoice.remainingAmount);
     final updatedPaidAmount = invoice.paidAmount + paymentAmount;
     final updatedStatus = updatedPaidAmount >= invoice.totalAmount
         ? 'paid'
@@ -152,9 +150,12 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             ? 'partial'
             : 'unpaid';
 
-    invoice.paidAmount = updatedPaidAmount;
-    invoice.status = updatedStatus;
-    await invoice.save();
+    final updatedInvoice = invoice.copyWith(
+      paidAmount: updatedPaidAmount,
+      status: updatedStatus,
+    );
+
+    await ref.read(invoiceRepositoryProvider).updateInvoice(updatedInvoice);
 
     final debtBox = Hive.box<DebtModel>(HiveBoxes.debts);
     final paymentBox = Hive.box<PaymentModel>(HiveBoxes.payments);
@@ -174,11 +175,14 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         customerId: linkedDebt.customerId,
         amount: paymentAmount,
         paidAt: DateTime.now(),
-        notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+        notes: notesController.text.trim().isEmpty
+            ? null
+            : notesController.text.trim(),
       );
       await paymentBox.put(payment.id, payment);
 
-      linkedDebt.remainingAmount = max(0, linkedDebt.remainingAmount - paymentAmount);
+      linkedDebt.remainingAmount =
+          max(0, linkedDebt.remainingAmount - paymentAmount);
       linkedDebt.status = linkedDebt.remainingAmount <= 0 ? 'paid' : 'open';
       await linkedDebt.save();
 
@@ -192,86 +196,106 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         await customer.save();
       }
     }
-
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final invoice = _invoice;
-    if (invoice == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.invoice)),
-        body: Center(child: Text(l10n.invoiceNotFound)),
-      );
-    }
-
-    final items = _items(invoice);
-    final remaining = invoice.totalAmount - invoice.paidAmount;
+    final invoiceAsync = ref.watch(invoiceByIdProvider(widget.invoiceId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${l10n.invoice} #${invoice.id.substring(0, 8)}'),
+        title: invoiceAsync.maybeWhen(
+          data: (invoice) => invoice == null
+              ? Text(l10n.invoice)
+              : Text('${l10n.invoice} #${invoice.id.substring(0, 8)}'),
+          orElse: () => Text(l10n.invoice),
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text('${l10n.date}: ${DateFormat('yyyy-MM-dd HH:mm').format(invoice.createdAt)}'),
-            subtitle: Text('${l10n.customer}: ${_customerName(invoice, l10n)}'),
-            trailing: InvoiceStatusBadge(status: invoice.status),
-          ),
-          const SizedBox(height: 12),
-          DataTable(
-            columns: [
-              DataColumn(label: Text(l10n.products)),
-              DataColumn(label: Text(l10n.units)),
-              DataColumn(label: Text(l10n.price)),
-              DataColumn(label: Text(l10n.subtotal)),
+      body: invoiceAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text(error.toString())),
+        data: (invoice) {
+          if (invoice == null) {
+            return Center(child: Text(l10n.invoiceNotFound));
+          }
+
+          final items = invoice.items;
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                    '${l10n.date}: ${DateFormat('yyyy-MM-dd HH:mm').format(invoice.createdAt)}'),
+                subtitle:
+                    Text('${l10n.customer}: ${_customerName(invoice, l10n)}'),
+                trailing: InvoiceStatusBadge(status: invoice.status),
+              ),
+              const SizedBox(height: 12),
+              DataTable(
+                columns: [
+                  DataColumn(label: Text(l10n.products)),
+                  DataColumn(label: Text(l10n.units)),
+                  DataColumn(label: Text(l10n.price)),
+                  DataColumn(label: Text(l10n.subtotal)),
+                ],
+                rows: items
+                    .map(
+                      (item) => DataRow(
+                        cells: [
+                          DataCell(Text(item.productName)),
+                          DataCell(Text(item.quantity.toString())),
+                          DataCell(Text(item.unitPrice.toStringAsFixed(2))),
+                          DataCell(Text(item.subtotal.toStringAsFixed(2))),
+                        ],
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 12),
+              _SummaryRow(
+                  label: l10n.subtotal,
+                  value:
+                      '${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd}'),
+              _SummaryRow(
+                  label: l10n.total,
+                  value:
+                      '${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd}'),
+              _SummaryRow(
+                  label: l10n.paid,
+                  value:
+                      '${invoice.paidAmount.toStringAsFixed(2)} ${l10n.dzd}'),
+              _SummaryRow(
+                label: l10n.remaining,
+                value:
+                    '${invoice.remainingAmount.toStringAsFixed(2)} ${l10n.dzd}',
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed:
+                    _exporting ? null : () => _exportPdf(invoice, items, l10n),
+                icon: _exporting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.picture_as_pdf),
+                label: Text(l10n.exportPdf),
+              ),
+              if (invoice.status == 'unpaid' || invoice.status == 'partial')
+                const SizedBox(height: 8),
+              if (invoice.status == 'unpaid' || invoice.status == 'partial')
+                OutlinedButton.icon(
+                  onPressed: () => _recordPayment(invoice),
+                  icon: const Icon(Icons.payments),
+                  label: Text(l10n.recordPayment),
+                ),
             ],
-            rows: items
-                .map(
-                  (item) => DataRow(
-                    cells: [
-                      DataCell(Text(item.productName)),
-                      DataCell(Text(item.quantity.toString())),
-                      DataCell(Text(item.unitPrice.toStringAsFixed(2))),
-                      DataCell(Text(item.subtotal.toStringAsFixed(2))),
-                    ],
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 12),
-          _SummaryRow(label: l10n.subtotal, value: '${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd}'),
-          _SummaryRow(label: l10n.total, value: '${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd}'),
-          _SummaryRow(label: l10n.paid, value: '${invoice.paidAmount.toStringAsFixed(2)} ${l10n.dzd}'),
-          _SummaryRow(label: l10n.remaining, value: '${remaining.toStringAsFixed(2)} ${l10n.dzd}'),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _exporting ? null : () => _exportPdf(invoice, items, l10n),
-            icon: _exporting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.picture_as_pdf),
-            label: Text(l10n.exportPdf),
-          ),
-          if (invoice.status == 'unpaid' || invoice.status == 'partial')
-            const SizedBox(height: 8),
-          if (invoice.status == 'unpaid' || invoice.status == 'partial')
-            OutlinedButton.icon(
-              onPressed: () => _recordPayment(invoice),
-              icon: const Icon(Icons.payments),
-              label: Text(l10n.recordPayment),
-            ),
-        ],
+          );
+        },
       ),
     );
   }

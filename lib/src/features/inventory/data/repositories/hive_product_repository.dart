@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:hive/hive.dart';
 
 import '../../../../core/db/hive_boxes.dart';
@@ -55,8 +57,27 @@ class HiveProductRepository implements ProductRepository {
   }
 
   @override
-  Future<void> addProduct(Product product) async {
+  Stream<List<Product>> watchProducts() async* {
+    yield await getAllProducts();
+    yield* _productsBox.watch().asyncMap((_) => getAllProducts());
+  }
+
+  @override
+  Stream<Product?> watchProductById(String id) async* {
+    yield await getProductById(id);
+    yield* _productsBox
+        .watch(key: id)
+        .map((_) => _productsBox.get(id)?.toEntity());
+  }
+
+  @override
+  Future<void> upsertProduct(Product product) async {
     await _productsBox.put(product.id, product.toModel());
+  }
+
+  @override
+  Future<void> addProduct(Product product) async {
+    await upsertProduct(product);
   }
 
   @override
@@ -66,7 +87,8 @@ class HiveProductRepository implements ProductRepository {
 
   @override
   Future<List<Product>> getAllProducts() async {
-    final products = _productsBox.values.map((model) => model.toEntity()).toList();
+    final products =
+        _productsBox.values.map((model) => model.toEntity()).toList();
     products.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return products;
   }
@@ -109,7 +131,7 @@ class HiveProductRepository implements ProductRepository {
 
   @override
   Future<void> updateProduct(Product product) async {
-    await _productsBox.put(product.id, product.toModel());
+    await upsertProduct(product);
   }
 
   @override

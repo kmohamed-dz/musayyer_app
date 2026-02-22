@@ -10,8 +10,9 @@ import '../../../customers/data/models/customer_model.dart';
 import '../../../debt/data/models/debt_model.dart';
 import '../../../inventory/domain/entities/product.dart';
 import '../../../inventory/presentation/providers/product_providers.dart';
-import '../../../invoice/data/models/invoice_item_model.dart';
-import '../../../invoice/data/models/invoice_model.dart';
+import '../../../invoice/domain/entities/invoice.dart';
+import '../../../invoice/domain/entities/invoice_item.dart';
+import '../../../invoice/presentation/providers/invoice_providers.dart';
 import '../../domain/entities/cart_item.dart';
 import '../providers/cart_provider.dart';
 import '../widgets/cart_item_tile.dart';
@@ -43,7 +44,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       return;
     }
 
-    final product = await ref.read(productRepositoryProvider).getProductByBarcode(barcode);
+    final product =
+        await ref.read(productRepositoryProvider).getProductByBarcode(barcode);
     if (product == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +77,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       return;
     }
 
-    if (result.action == CheckoutAction.payCash && result.amountPaid < cart.total) {
+    if (result.action == CheckoutAction.payCash &&
+        result.amountPaid < cart.total) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.amountPaidMustCoverTotal)),
       );
@@ -92,41 +95,32 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   ) async {
     final invoiceId = const Uuid().v4();
     final now = DateTime.now();
-
-    final itemBox = Hive.box<InvoiceItemModel>(HiveBoxes.invoiceItems);
-    final invoiceBox = Hive.box<InvoiceModel>(HiveBoxes.invoices);
     final debtBox = Hive.box<DebtModel>(HiveBoxes.debts);
     final customerBox = Hive.box<CustomerModel>(HiveBoxes.customers);
 
-    final itemIds = <String>[];
-
-    for (final item in items) {
-      final invoiceItemId = const Uuid().v4();
-      itemIds.add(invoiceItemId);
-
-      final invoiceItem = InvoiceItemModel(
-        id: invoiceItemId,
-        productId: item.product.id,
-        productName: item.product.name,
-        unitPrice: item.product.price,
-        quantity: item.quantity,
-        subtotal: item.subtotal,
-      );
-
-      await itemBox.put(invoiceItemId, invoiceItem);
-
-      final newStock = (item.product.stock - item.quantity).clamp(0, 999999);
-      await ref.read(productRepositoryProvider).updateStock(item.product.id, newStock);
-    }
+    final invoiceItems = items
+        .map(
+          (item) => InvoiceItem(
+            id: const Uuid().v4(),
+            productId: item.product.id,
+            productName: item.product.name,
+            unitPrice: item.product.price,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+          ),
+        )
+        .toList();
+    final itemIds = invoiceItems.map((item) => item.id).toList();
 
     final isCash = result.action == CheckoutAction.payCash;
     final paidAmount = isCash ? total : 0.0;
     final status = isCash ? 'paid' : 'unpaid';
 
-    final invoice = InvoiceModel(
+    final invoice = Invoice(
       id: invoiceId,
       customerId: result.customerId,
       itemIds: itemIds,
+      items: invoiceItems,
       totalAmount: total,
       paidAmount: paidAmount,
       createdAt: now,
@@ -134,7 +128,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       notes: null,
     );
 
-    await invoiceBox.put(invoiceId, invoice);
+    try {
+      await ref.read(invoiceRepositoryProvider).createInvoice(invoice);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Checkout failed: $error')),
+        );
+      }
+      return;
+    }
 
     if (!isCash) {
       final customerId = result.customerId!;
@@ -159,7 +162,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
 
     ref.read(cartProvider.notifier).clearCart();
-    await ref.read(productsProvider.notifier).refresh();
 
     if (mounted) {
       context.go('/invoices/$invoiceId');
@@ -237,11 +239,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           child: productsAsync.when(
                             data: (products) => _ProductResultList(
                               products: products,
-                              onTap: (product) =>
-                                  ref.read(cartProvider.notifier).addProduct(product),
+                              onTap: (product) => ref
+                                  .read(cartProvider.notifier)
+                                  .addProduct(product),
                             ),
-                            loading: () => const Center(child: CircularProgressIndicator()),
-                            error: (error, _) => Center(child: Text(error.toString())),
+                            loading: () => const Center(
+                                child: CircularProgressIndicator()),
+                            error: (error, _) =>
+                                Center(child: Text(error.toString())),
                           ),
                         ),
                       ],
@@ -268,12 +273,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                       item: item,
                                       onIncrement: () => ref
                                           .read(cartProvider.notifier)
-                                          .updateQuantity(item.product.id, item.quantity + 1),
+                                          .updateQuantity(item.product.id,
+                                              item.quantity + 1),
                                       onDecrement: () => ref
                                           .read(cartProvider.notifier)
-                                          .updateQuantity(item.product.id, item.quantity - 1),
-                                      onRemove: () =>
-                                          ref.read(cartProvider.notifier).removeProduct(item.product.id),
+                                          .updateQuantity(item.product.id,
+                                              item.quantity - 1),
+                                      onRemove: () => ref
+                                          .read(cartProvider.notifier)
+                                          .removeProduct(item.product.id),
                                     );
                                   },
                                 ),
@@ -319,7 +327,8 @@ class _ProductResultList extends StatelessWidget {
         return Card(
           child: ListTile(
             onTap: () => onTap(product),
-            title: Text(product.nameAr.isNotEmpty ? product.nameAr : product.name),
+            title:
+                Text(product.nameAr.isNotEmpty ? product.nameAr : product.name),
             subtitle: Text(
               '${product.price.toStringAsFixed(2)} ${l10n.dzd} • ${l10n.stock} ${product.stock}',
             ),

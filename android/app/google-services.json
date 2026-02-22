@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "949694924905",
+    "project_id": "masyyer-d7a9e",
+    "storage_bucket": "masyyer-d7a9e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949694924905:android:92e36da2f7e8785f883af8",
+        "android_client_info": {
+          "package_name": "com.musayyer.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPRD8EktoG66Hoq3RlCZCjZ-MaYxwd2gc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

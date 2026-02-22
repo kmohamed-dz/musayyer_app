@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../../core/db/hive_boxes.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/storage/storage_keys.dart';
-import '../../inventory/data/models/product_model.dart';
+import '../../inventory/presentation/providers/product_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,6 +13,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final productsAsync = ref.watch(productsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -22,7 +21,9 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              await ref.read(localStorageProvider).remove(StorageKeys.authToken);
+              await ref
+                  .read(localStorageProvider)
+                  .remove(StorageKeys.authToken);
               if (context.mounted) {
                 context.go('/login');
               }
@@ -31,19 +32,17 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: ValueListenableBuilder(
-          valueListenable: Hive.box<ProductModel>(HiveBoxes.products).listenable(),
-          builder: (_, Box<ProductModel> box, __) {
-            final products = box.values.toList();
-
-            return Column(
+      body: productsAsync.when(
+        data: (products) {
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${l10n.welcomeBack}, ${l10n.operator}',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Text(l10n.demoProductsLoaded(products.length)),
@@ -85,16 +84,19 @@ class HomeScreen extends ConsumerWidget {
                       final product = products[index];
                       return ListTile(
                         title: Text(product.name),
-                        subtitle: Text('${product.price.toStringAsFixed(0)} ${l10n.dzd}'),
+                        subtitle: Text(
+                            '${product.price.toStringAsFixed(0)} ${l10n.dzd}'),
                         trailing: Text(l10n.stockValue(product.stock)),
                       );
                     },
                   ),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text(error.toString())),
       ),
     );
   }

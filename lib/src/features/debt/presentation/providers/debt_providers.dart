@@ -8,19 +8,20 @@ import '../../../../core/db/hive_boxes.dart';
 import '../../../customers/data/models/customer_model.dart';
 import '../../data/models/debt_model.dart';
 import '../../data/models/payment_model.dart';
-import '../../../invoice/data/models/invoice_model.dart';
+import '../../../invoice/domain/repositories/invoice_repository.dart';
+import '../../../invoice/presentation/providers/invoice_providers.dart';
 
 class DebtPaymentService {
   DebtPaymentService({
     required this.debtBox,
     required this.paymentBox,
-    required this.invoiceBox,
+    required this.invoiceRepository,
     required this.customerBox,
   });
 
   final Box<DebtModel> debtBox;
   final Box<PaymentModel> paymentBox;
-  final Box<InvoiceModel> invoiceBox;
+  final InvoiceRepository invoiceRepository;
   final Box<CustomerModel> customerBox;
 
   Future<void> recordPayment({
@@ -50,17 +51,21 @@ class DebtPaymentService {
     await debt.save();
 
     if (debt.invoiceId != null) {
-      final invoice = invoiceBox.get(debt.invoiceId);
+      final invoice = await invoiceRepository.getInvoiceById(debt.invoiceId!);
       if (invoice != null) {
-        invoice.paidAmount = min(invoice.totalAmount, invoice.paidAmount + paymentAmount);
-        if (invoice.paidAmount >= invoice.totalAmount) {
-          invoice.status = 'paid';
-        } else if (invoice.paidAmount > 0) {
-          invoice.status = 'partial';
-        } else {
-          invoice.status = 'unpaid';
-        }
-        await invoice.save();
+        final updatedPaidAmount =
+            min(invoice.totalAmount, invoice.paidAmount + paymentAmount);
+        final updatedStatus = updatedPaidAmount >= invoice.totalAmount
+            ? 'paid'
+            : updatedPaidAmount > 0
+                ? 'partial'
+                : 'unpaid';
+        await invoiceRepository.updateInvoice(
+          invoice.copyWith(
+            paidAmount: updatedPaidAmount,
+            status: updatedStatus,
+          ),
+        );
       }
     }
 
@@ -79,7 +84,7 @@ final debtPaymentServiceProvider = Provider<DebtPaymentService>((ref) {
   return DebtPaymentService(
     debtBox: Hive.box<DebtModel>(HiveBoxes.debts),
     paymentBox: Hive.box<PaymentModel>(HiveBoxes.payments),
-    invoiceBox: Hive.box<InvoiceModel>(HiveBoxes.invoices),
+    invoiceRepository: ref.read(invoiceRepositoryProvider),
     customerBox: Hive.box<CustomerModel>(HiveBoxes.customers),
   );
 });

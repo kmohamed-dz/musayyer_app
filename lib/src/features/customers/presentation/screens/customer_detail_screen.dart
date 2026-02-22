@@ -7,7 +7,7 @@ import 'package:hive/hive.dart';
 import '../../../../core/db/hive_boxes.dart';
 import '../../../debt/data/models/debt_model.dart';
 import '../../../debt/presentation/providers/debt_providers.dart';
-import '../../../invoice/data/models/invoice_model.dart';
+import '../../../invoice/presentation/providers/invoice_providers.dart';
 import '../../data/models/customer_model.dart';
 
 class CustomerDetailScreen extends ConsumerStatefulWidget {
@@ -19,7 +19,8 @@ class CustomerDetailScreen extends ConsumerStatefulWidget {
   final String customerId;
 
   @override
-  ConsumerState<CustomerDetailScreen> createState() => _CustomerDetailScreenState();
+  ConsumerState<CustomerDetailScreen> createState() =>
+      _CustomerDetailScreenState();
 }
 
 class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
@@ -39,12 +40,10 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       );
     }
 
-    final invoices = Hive.box<InvoiceModel>(HiveBoxes.invoices).values
-        .where((invoice) => invoice.customerId == customer.id)
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final invoicesAsync = ref.watch(customerInvoicesProvider(customer.id));
 
-    final debts = Hive.box<DebtModel>(HiveBoxes.debts).values
+    final debts = Hive.box<DebtModel>(HiveBoxes.debts)
+        .values
         .where((debt) => debt.customerId == customer.id)
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -57,9 +56,11 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           Card(
             child: ListTile(
               title: Text(customer.name),
-              subtitle: Text('${customer.phone ?? '-'}\n${customer.address ?? '-'}'),
+              subtitle:
+                  Text('${customer.phone ?? '-'}\n${customer.address ?? '-'}'),
               isThreeLine: true,
-              trailing: Text('${customer.totalDebt.toStringAsFixed(2)} ${l10n.dzd}'),
+              trailing:
+                  Text('${customer.totalDebt.toStringAsFixed(2)} ${l10n.dzd}'),
             ),
           ),
           const SizedBox(height: 12),
@@ -71,28 +72,48 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             label: Text(l10n.recordPayment),
           ),
           const SizedBox(height: 16),
-          Text(l10n.invoices, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.invoices,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          if (invoices.isEmpty) Text(l10n.noInvoicesForCustomer),
-          for (final invoice in invoices)
-            ListTile(
-              title: Text('${l10n.invoice} #${invoice.id.substring(0, 8)}'),
-              subtitle: Text(
-                '${l10n.total} ${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd} | '
-                '${l10n.paid} ${invoice.paidAmount.toStringAsFixed(2)} ${l10n.dzd}',
-              ),
-              trailing: Text(_statusLabel(l10n, invoice.status)),
-              onTap: () => context.push('/invoices/${invoice.id}'),
-            ),
+          invoicesAsync.when(
+            data: (invoices) {
+              if (invoices.isEmpty) {
+                return Text(l10n.noInvoicesForCustomer);
+              }
+
+              return Column(
+                children: [
+                  for (final invoice in invoices)
+                    ListTile(
+                      title: Text(
+                          '${l10n.invoice} #${invoice.id.substring(0, 8)}'),
+                      subtitle: Text(
+                        '${l10n.total} ${invoice.totalAmount.toStringAsFixed(2)} ${l10n.dzd} | '
+                        '${l10n.paid} ${invoice.paidAmount.toStringAsFixed(2)} ${l10n.dzd}',
+                      ),
+                      trailing: Text(_statusLabel(l10n, invoice.status)),
+                      onTap: () => context.push('/invoices/${invoice.id}'),
+                    ),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Text(error.toString()),
+          ),
           const SizedBox(height: 16),
-          Text(l10n.debts, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.debts,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           if (debts.isEmpty) Text(l10n.noDebtsForCustomer),
           for (final debt in debts)
             Card(
               child: ListTile(
-                title: Text('${l10n.debt} ${debt.amount.toStringAsFixed(2)} ${l10n.dzd}'),
-                subtitle: Text('${l10n.remaining} ${debt.remainingAmount.toStringAsFixed(2)} ${l10n.dzd}'),
+                title: Text(
+                    '${l10n.debt} ${debt.amount.toStringAsFixed(2)} ${l10n.dzd}'),
+                subtitle: Text(
+                    '${l10n.remaining} ${debt.remainingAmount.toStringAsFixed(2)} ${l10n.dzd}'),
                 trailing: Text(_statusLabel(l10n, debt.status)),
               ),
             ),
@@ -151,7 +172,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                     const SizedBox(height: 10),
                     TextField(
                       controller: amountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: l10n.amount,
                         border: const OutlineInputBorder(),
@@ -168,7 +190,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        Expanded(child: Text('${l10n.date}: ${_selectedDate.toIso8601String().split('T').first}')),
+                        Expanded(
+                            child: Text(
+                                '${l10n.date}: ${_selectedDate.toIso8601String().split('T').first}')),
                         TextButton(
                           onPressed: () async {
                             final picked = await showDatePicker(
@@ -221,7 +245,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           debt: debt,
           amount: amount,
           paidAt: _selectedDate,
-          notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+          notes: notesController.text.trim().isEmpty
+              ? null
+              : notesController.text.trim(),
         );
 
     if (mounted) {

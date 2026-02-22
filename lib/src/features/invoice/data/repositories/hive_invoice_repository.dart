@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:hive/hive.dart';
 
 import '../../../../core/db/hive_boxes.dart';
@@ -71,8 +73,23 @@ class HiveInvoiceRepository implements InvoiceRepository {
   }
 
   @override
+  Stream<List<Invoice>> watchInvoices() async* {
+    yield await getAllInvoices();
+    yield* _invoiceBox.watch().asyncMap((_) => getAllInvoices());
+  }
+
+  @override
+  Stream<Invoice?> watchInvoiceById(String id) async* {
+    yield await getInvoiceById(id);
+    yield* _invoiceBox
+        .watch(key: id)
+        .map((_) => _invoiceBox.get(id)?.toEntity());
+  }
+
+  @override
   Future<List<Invoice>> getAllInvoices() async {
-    final invoices = _invoiceBox.values.map((model) => model.toEntity()).toList();
+    final invoices =
+        _invoiceBox.values.map((model) => model.toEntity()).toList();
     invoices.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return invoices;
   }
@@ -107,7 +124,8 @@ class HiveInvoiceRepository implements InvoiceRepository {
     final invoices = await getAllInvoices();
 
     return invoices.where((invoice) {
-      final matchesStatus = normalizedStatus == 'all' || invoice.status == normalizedStatus;
+      final matchesStatus =
+          normalizedStatus == 'all' || invoice.status == normalizedStatus;
       if (!matchesStatus) {
         return false;
       }
@@ -123,6 +141,22 @@ class HiveInvoiceRepository implements InvoiceRepository {
       return invoice.id.toLowerCase().contains(normalizedQuery) ||
           customerName.contains(normalizedQuery);
     }).toList();
+  }
+
+  @override
+  Future<void> createInvoice(Invoice invoice) async {
+    for (final item in invoice.items) {
+      final model = InvoiceItemModel(
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        subtotal: item.subtotal,
+      );
+      await _itemBox.put(model.id, model);
+    }
+    await _invoiceBox.put(invoice.id, invoice.toModel());
   }
 
   @override

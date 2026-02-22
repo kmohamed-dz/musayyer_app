@@ -20,26 +20,18 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   late final Box debtBox;
-  late final Box invoiceBox;
-  late final Box productBox;
 
   @override
   void initState() {
     super.initState();
     debtBox = Hive.box<DebtModel>(HiveBoxes.debts);
-    invoiceBox = Hive.box(HiveBoxes.invoices);
-    productBox = Hive.box(HiveBoxes.products);
 
     debtBox.listenable().addListener(_triggerRefresh);
-    invoiceBox.listenable().addListener(_triggerRefresh);
-    productBox.listenable().addListener(_triggerRefresh);
   }
 
   @override
   void dispose() {
     debtBox.listenable().removeListener(_triggerRefresh);
-    invoiceBox.listenable().removeListener(_triggerRefresh);
-    productBox.listenable().removeListener(_triggerRefresh);
     super.dispose();
   }
 
@@ -62,7 +54,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final lowStockProducts = ref.watch(lowStockDashboardProvider);
 
     final debts = Hive.box<DebtModel>(HiveBoxes.debts).values;
-    final debtCustomersCount = debts.where((debt) => debt.remainingAmount > 0).map((d) => d.customerId).toSet().length;
+    final debtCustomersCount = debts
+        .where((debt) => debt.remainingAmount > 0)
+        .map((d) => d.customerId)
+        .toSet()
+        .length;
 
     return Scaffold(
       appBar: AppBar(
@@ -83,7 +79,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Text('${l10n.today}: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}'),
+          Text(
+              '${l10n.today}: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}'),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -105,10 +102,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 10),
           _KpiCard(
             title: l10n.totalDebts,
-            value: '${totalUnpaidDebts.toStringAsFixed(2)} ${l10n.dzd} (${l10n.customersCount(debtCustomersCount)})',
+            value:
+                '${totalUnpaidDebts.toStringAsFixed(2)} ${l10n.dzd} (${l10n.customersCount(debtCustomersCount)})',
           ),
           const SizedBox(height: 16),
-          Text(l10n.topProductsWeek, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.topProductsWeek,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -121,14 +121,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text('${i + 1}. ${topProducts[i].name}'),
-                            trailing: Text('${topProducts[i].units} ${l10n.units}'),
+                            trailing:
+                                Text('${topProducts[i].units} ${l10n.units}'),
                           ),
                       ],
                     ),
             ),
           ),
           const SizedBox(height: 16),
-          Text(l10n.weeklyRevenueChart, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.weeklyRevenueChart,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -140,7 +143,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Text(l10n.lowStockAlerts, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.lowStockAlerts,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           if (lowStockProducts.isEmpty)
             Card(
@@ -152,7 +157,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           for (final product in lowStockProducts)
             Card(
               child: ListTile(
-                title: Text(product.nameAr.isNotEmpty ? product.nameAr : product.name),
+                title: Text(
+                    product.nameAr.isNotEmpty ? product.nameAr : product.name),
                 subtitle: Text(l10n.leftCount(product.stock)),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/inventory/edit/${product.id}'),
@@ -201,7 +207,8 @@ class _WeeklyRevenueChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxRevenue = data.fold<double>(0, (maxValue, item) => item.revenue > maxValue ? item.revenue : maxValue);
+    final maxRevenue = data.fold<double>(0,
+        (maxValue, item) => item.revenue > maxValue ? item.revenue : maxValue);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -218,7 +225,9 @@ class _WeeklyRevenueChart extends StatelessWidget {
                       alignment: Alignment.bottomCenter,
                       child: Container(
                         width: 16,
-                        height: maxRevenue == 0 ? 4 : (item.revenue / maxRevenue) * 120,
+                        height: maxRevenue == 0
+                            ? 4
+                            : (item.revenue / maxRevenue) * 120,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(6),

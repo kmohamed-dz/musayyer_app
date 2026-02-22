@@ -45,12 +45,15 @@ class ProductDetailScreen extends ConsumerWidget {
             children: [
               _InfoTile(label: l10n.nameAr, value: product.nameAr),
               _InfoTile(label: l10n.nameFr, value: product.nameFr),
-              _InfoTile(label: l10n.price, value: '${product.price.toStringAsFixed(2)} ${l10n.dzd}'),
+              _InfoTile(
+                  label: l10n.price,
+                  value: '${product.price.toStringAsFixed(2)} ${l10n.dzd}'),
               _InfoTile(
                 label: l10n.costPrice,
                 value: '${product.costPrice.toStringAsFixed(2)} ${l10n.dzd}',
               ),
-              _InfoTile(label: l10n.stock, value: '${product.stock} ${product.unit}'),
+              _InfoTile(
+                  label: l10n.stock, value: '${product.stock} ${product.unit}'),
               _InfoTile(label: l10n.category, value: product.category ?? '-'),
               _InfoTile(label: l10n.barcode, value: product.barcode ?? '-'),
               _InfoTile(
@@ -89,7 +92,7 @@ class ProductDetailScreen extends ConsumerWidget {
       return;
     }
 
-    await ref.read(productsProvider.notifier).deleteProduct(productId);
+    await ref.read(productRepositoryProvider).deleteProduct(productId);
     if (context.mounted) {
       context.pop();
     }

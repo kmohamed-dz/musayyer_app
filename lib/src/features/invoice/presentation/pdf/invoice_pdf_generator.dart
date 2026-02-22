@@ -5,8 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-import '../../data/models/invoice_item_model.dart';
-import '../../data/models/invoice_model.dart';
+import '../../domain/entities/invoice.dart';
+import '../../domain/entities/invoice_item.dart';
 
 class InvoicePdfTexts {
   InvoicePdfTexts({
@@ -40,8 +40,8 @@ class InvoicePdfTexts {
 
 class InvoicePdfGenerator {
   Future<String> generate({
-    required InvoiceModel invoice,
-    required List<InvoiceItemModel> items,
+    required Invoice invoice,
+    required List<InvoiceItem> items,
     required String shopName,
     required String customerName,
     required InvoicePdfTexts texts,
@@ -67,7 +67,12 @@ class InvoicePdfGenerator {
             pw.Text('${texts.customer}: $customerName'),
             pw.SizedBox(height: 12),
             pw.TableHelper.fromTextArray(
-              headers: [texts.product, texts.qty, texts.unitPrice, texts.subtotal],
+              headers: [
+                texts.product,
+                texts.qty,
+                texts.unitPrice,
+                texts.subtotal
+              ],
               data: items
                   .map(
                     (item) => [
@@ -85,8 +90,10 @@ class InvoicePdfGenerator {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text('${texts.total}: ${invoice.totalAmount.toStringAsFixed(2)} ${texts.currency}'),
-                  pw.Text('${texts.paid}: ${invoice.paidAmount.toStringAsFixed(2)} ${texts.currency}'),
+                  pw.Text(
+                      '${texts.total}: ${invoice.totalAmount.toStringAsFixed(2)} ${texts.currency}'),
+                  pw.Text(
+                      '${texts.paid}: ${invoice.paidAmount.toStringAsFixed(2)} ${texts.currency}'),
                   pw.Text(
                     '${texts.remaining}: ${(invoice.totalAmount - invoice.paidAmount).toStringAsFixed(2)} ${texts.currency}',
                   ),

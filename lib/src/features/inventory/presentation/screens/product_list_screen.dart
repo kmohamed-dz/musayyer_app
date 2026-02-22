@@ -26,7 +26,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   }
 
   Future<void> _refresh() async {
-    await ref.read(productsProvider.notifier).refresh();
+    ref.invalidate(productsProvider);
+    await ref.read(productRepositoryProvider).getAllProducts();
   }
 
   @override
@@ -93,7 +94,8 @@ class _ProductsList extends StatelessWidget {
         child: ListView(
           children: [
             const SizedBox(height: 80),
-            const Icon(Icons.inventory_2_outlined, size: 72, color: Colors.grey),
+            const Icon(Icons.inventory_2_outlined,
+                size: 72, color: Colors.grey),
             const SizedBox(height: 12),
             Center(child: Text(l10n.noProducts)),
           ],

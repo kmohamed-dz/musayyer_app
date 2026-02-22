@@ -4,8 +4,8 @@ import 'package:hive/hive.dart';
 import '../../../../core/db/hive_boxes.dart';
 import '../../../debt/data/models/debt_model.dart';
 import '../../../inventory/presentation/providers/product_providers.dart';
-import '../../../invoice/data/models/invoice_item_model.dart';
-import '../../../invoice/data/models/invoice_model.dart';
+import '../../../invoice/domain/entities/invoice.dart';
+import '../../../invoice/presentation/providers/invoice_providers.dart';
 
 class TopProductStat {
   TopProductStat({required this.name, required this.units});
@@ -26,7 +26,10 @@ bool _isSameDay(DateTime a, DateTime b) {
 }
 
 final todayRevenueProvider = Provider<double>((ref) {
-  final invoices = Hive.box<InvoiceModel>(HiveBoxes.invoices).values;
+  final invoices = ref.watch(invoicesProvider).maybeWhen(
+        data: (value) => value,
+        orElse: () => const <Invoice>[],
+      );
   final today = DateTime.now();
 
   return invoices
@@ -35,9 +38,14 @@ final todayRevenueProvider = Provider<double>((ref) {
 });
 
 final todaySalesCountProvider = Provider<int>((ref) {
-  final invoices = Hive.box<InvoiceModel>(HiveBoxes.invoices).values;
+  final invoices = ref.watch(invoicesProvider).maybeWhen(
+        data: (value) => value,
+        orElse: () => const <Invoice>[],
+      );
   final today = DateTime.now();
-  return invoices.where((invoice) => _isSameDay(invoice.createdAt, today)).length;
+  return invoices
+      .where((invoice) => _isSameDay(invoice.createdAt, today))
+      .length;
 });
 
 final totalUnpaidDebtsProvider = Provider<double>((ref) {
@@ -46,24 +54,21 @@ final totalUnpaidDebtsProvider = Provider<double>((ref) {
 });
 
 final topProductsWeekProvider = Provider<List<TopProductStat>>((ref) {
-  final invoiceBox = Hive.box<InvoiceModel>(HiveBoxes.invoices);
-  final itemBox = Hive.box<InvoiceItemModel>(HiveBoxes.invoiceItems);
+  final invoices = ref.watch(invoicesProvider).maybeWhen(
+        data: (value) => value,
+        orElse: () => const <Invoice>[],
+      );
   final now = DateTime.now();
   final weekStart = now.subtract(const Duration(days: 7));
 
-  final Map<String, int> unitsByProduct = {};
+  final unitsByProduct = <String, int>{};
 
-  for (final invoice in invoiceBox.values) {
+  for (final invoice in invoices) {
     if (invoice.createdAt.isBefore(weekStart)) {
       continue;
     }
 
-    for (final itemId in invoice.itemIds) {
-      final item = itemBox.get(itemId);
-      if (item == null) {
-        continue;
-      }
-
+    for (final item in invoice.items) {
       unitsByProduct.update(
         item.productName,
         (units) => units + item.quantity,
@@ -81,11 +86,15 @@ final topProductsWeekProvider = Provider<List<TopProductStat>>((ref) {
 });
 
 final weeklyRevenueProvider = Provider<List<DailyRevenue>>((ref) {
-  final invoices = Hive.box<InvoiceModel>(HiveBoxes.invoices).values;
+  final invoices = ref.watch(invoicesProvider).maybeWhen(
+        data: (value) => value,
+        orElse: () => const <Invoice>[],
+      );
   final now = DateTime.now();
 
   return List.generate(7, (index) {
-    final date = DateTime(now.year, now.month, now.day).subtract(Duration(days: 6 - index));
+    final date = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: 6 - index));
     final revenue = invoices
         .where((invoice) => _isSameDay(invoice.createdAt, date))
         .fold<double>(0, (sum, invoice) => sum + invoice.paidAmount);

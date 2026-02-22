@@ -16,7 +16,8 @@ class AddEditProductScreen extends ConsumerStatefulWidget {
   final String? productId;
 
   @override
-  ConsumerState<AddEditProductScreen> createState() => _AddEditProductScreenState();
+  ConsumerState<AddEditProductScreen> createState() =>
+      _AddEditProductScreenState();
 }
 
 class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
@@ -45,7 +46,9 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
       return;
     }
 
-    final product = await ref.read(productRepositoryProvider).getProductById(widget.productId!);
+    final product = await ref
+        .read(productRepositoryProvider)
+        .getProductById(widget.productId!);
     if (product == null || !mounted) {
       return;
     }
@@ -106,19 +109,23 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
       price: double.parse(_priceController.text.trim()),
       costPrice: double.parse(_costPriceController.text.trim()),
       stock: int.parse(_stockController.text.trim()),
-      barcode: _barcodeController.text.trim().isEmpty ? null : _barcodeController.text.trim(),
-      category: _categoryController.text.trim().isEmpty ? null : _categoryController.text.trim(),
+      barcode: _barcodeController.text.trim().isEmpty
+          ? null
+          : _barcodeController.text.trim(),
+      category: _categoryController.text.trim().isEmpty
+          ? null
+          : _categoryController.text.trim(),
       imagePath: _existingProduct?.imagePath,
       unit: _unitController.text.trim(),
       createdAt: _existingProduct?.createdAt ?? now,
       updatedAt: now,
     );
 
-    final notifier = ref.read(productsProvider.notifier);
+    final repository = ref.read(productRepositoryProvider);
     if (_existingProduct == null) {
-      await notifier.addProduct(product);
+      await repository.addProduct(product);
     } else {
-      await notifier.updateProduct(product);
+      await repository.updateProduct(product);
     }
 
     if (mounted) {
@@ -160,7 +167,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               _buildField(
                 controller: _priceController,
                 label: l10n.priceDzd,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   final price = double.tryParse(value ?? '');
                   if (price == null || price <= 0) {
@@ -173,7 +181,8 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
               _buildField(
                 controller: _costPriceController,
                 label: l10n.costPrice,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   final cost = double.tryParse(value ?? '');
                   if (cost == null || cost < 0) {
